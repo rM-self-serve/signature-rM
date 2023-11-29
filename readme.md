@@ -18,14 +18,14 @@ This simple program will remove the signature from the bottom of emails sent fro
 ## Install
 
 ```
-$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/install-webint-ob.sh && bash install-webint-ob.sh
+$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/install-signature-rm.sh && bash install-signature-rm.sh
 $ source ~/.bashrc
 ```
 
 ## Remove
 
 ```
-$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/remove-webint-ob.sh && bash remove-webint-ob.sh
+$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/remove-signature-rm.sh && bash remove-signature-rm.sh
 ```
 
 

@@ -67,7 +67,7 @@ sha_fail() {
 }
 
 [[ -f $binfile ]] && rm $binfile
-wget "https://github.com/rM-self-serve/${gh_pkgname}/releases/download/${release}/${gh_pkgname}" \
+wget "https://github.com/rM-self-serve/${gh_pkgname}/releases/download/${release}/${pkgname}" \
 	-O "$binfile"
 
 if ! pkg_sha_check; then
