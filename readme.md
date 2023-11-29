@@ -1,4 +1,4 @@
-# Signature-rM
+# signature-rM
 
 ### Inspired by and compatible with
 https://github.com/Barabazs/rM-signature-patch
@@ -7,6 +7,7 @@ https://github.com/Barabazs/rM-signature-patch
 
 This simple program will remove the signature from the bottom of emails sent from the device. It will also take a backup before the modification, and allow reverting the modication from the backup or by performing the modification in reverse.
 
+This will only need to be installed once, but run everytime the device updates.
 
 ## ReMarkable Software Version Compatibility
 
@@ -18,9 +19,7 @@ This simple program will remove the signature from the bottom of emails sent fro
 ## Install
 
 
-`$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/install-signature-rm.sh && bash install-signature-rm.sh`
-
-`$ source ~/.bashrc`
+`$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/install-signature-rm.sh && bash install-signature-rm.sh && source ~/.bashrc`
 
 
 ## Remove
@@ -30,7 +29,7 @@ This simple program will remove the signature from the bottom of emails sent fro
 
 ## Usage
 
-### To use Signature-rM, run:
+### To use signature-rM, run:
 
 ```
 $ systemctl stop xochitl
@@ -49,3 +48,11 @@ $ systemctl start xochitl
 
 ## After
 ![after](https://github.com/rM-self-serve/Signature-rM/assets/122753594/7ccc84f3-9602-47bb-b6f1-dc794f6901ef)
+
+## Manual install
+
+You will need docker/podman, cargo, and the cargo crate named cross. There are other ways to cross compile for 32 bit arm as well.
+
+`cross build --target armv7-unknown-linux-gnueabihf --release`
+
+Then copy the binary 'target/armv7-unknown-linux-gnueabihf/release/signature-rm' to the device.
