@@ -9,6 +9,9 @@ This simple program will remove the signature from the bottom of emails sent fro
 
 This will only need to be installed once, but run everytime the device updates.
 
+![demo](https://github.com/rM-self-serve/signature-rM/assets/122753594/59bb9621-af8c-4a33-a060-b0e0383053ba)
+
+
 ## ReMarkable Software Version Compatibility
 
 - ✅ 1.9 - v3.8
