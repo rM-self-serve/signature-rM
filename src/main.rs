@@ -1,21 +1,21 @@
 use clap::{Parser, Subcommand};
 use regex::Regex;
 use std::fs::OpenOptions;
-use std::io::Write;
-use std::io::{Error, ErrorKind};
+use std::io::{Error, ErrorKind, Write};
 use std::os::unix::fs::FileExt;
-use std::process::ExitCode;
+use std::process::{Command, ExitCode, Stdio};
 
 pub const XOBIN_PATH: &str = "/usr/bin/xochitl";
 pub const RM_CONF: &str = "/usr/share/remarkable/update.conf";
 pub const BCKUP_DIR: &str = "/home/root/.local/share/signature-rM";
+pub const TMP_FILE: &str = "/home/root/.local/share/signature-rM/signature-rm.xochitl.tmp";
 
 pub const CLI_ABOUT: &str = "
 Remove the signature from the bottom of emails sent from the device. 
 Source+Docs: https://github.com/rM-self-serve/signature-rM
 
-Remember to run 'systemctl stop xochitl' before applying/reverting,
-then 'systemctl start xochitl' once applied/reverted";
+Remember to run the following once applied/reverted:
+$ systemctl restart xochitl";
 
 #[derive(Parser)]
 #[command(author, version, about = CLI_ABOUT, long_about = None, arg_required_else_help(true))]
@@ -157,8 +157,6 @@ fn prompt(sub: &str) -> std::io::Result<bool> {
 }
 
 fn apply_entry(no_prompt: &bool) -> bool {
-    xo_warn();
-
     if let Err(err) = apply(no_prompt) {
         println!("{err}");
         return false;
@@ -167,13 +165,13 @@ fn apply_entry(no_prompt: &bool) -> bool {
 }
 
 fn apply(no_prompt: &bool) -> std::io::Result<()> {
-    let vers = get_version()?;
-    let bak_file = format!("{BCKUP_DIR}/xochitl-{vers}-bak");
-    println!("This will make a backup of xochitl at:\n{}\n", bak_file);
-
     if !no_prompt && !prompt("apply")? {
         return Ok(());
     }
+
+    let vers = get_version()?;
+    let bak_file = format!("{BCKUP_DIR}/xochitl-{vers}-bak");
+    println!("This will make a backup of xochitl at:\n{}\n", bak_file);
 
     let Some(ind) = og_index()? else {
         let err_str;
@@ -187,8 +185,11 @@ fn apply(no_prompt: &bool) -> std::io::Result<()> {
 
     backup(bak_file)?;
 
-    let file = OpenOptions::new().read(true).write(true).open(XOBIN_PATH)?;
-    file.write_at(b"\0", ind as u64)?;
+    std::fs::copy(XOBIN_PATH, TMP_FILE)?;
+    let file = OpenOptions::new().read(true).write(true).open(TMP_FILE)?;
+    file.write_at(b"\0", ind as u64)?; // the entire hack
+    cmd_cp(TMP_FILE, XOBIN_PATH)?;
+    std::fs::remove_file(TMP_FILE)?;
 
     println!("Successfully removed the signature");
     Ok(())
@@ -202,8 +203,6 @@ fn backup(bak_file: String) -> std::io::Result<()> {
 }
 
 fn revert_by_reverse_entry(no_prompt: &bool) -> bool {
-    xo_warn();
-
     if let Err(err) = revert_by_reverse(no_prompt) {
         println!("{err}");
         return false;
@@ -216,6 +215,14 @@ fn revert_by_reverse(no_prompt: &bool) -> std::io::Result<()> {
     if !no_prompt && !prompt("revert")? {
         return Ok(());
     }
+
+    let vers = get_version()?;
+    let bak_file = format!("{BCKUP_DIR}/xochitl-{vers}-hacked-bak");
+    println!(
+        "This will make a backup of the modified xochitl binary at:\n{}\n",
+        bak_file
+    );
+
     let Some(ind) = mod_index()? else {
         let err_str;
         if can_apply() {
@@ -227,16 +234,19 @@ fn revert_by_reverse(no_prompt: &bool) -> std::io::Result<()> {
         return Err(Error::new(ErrorKind::Other, err_str));
     };
 
-    let file = OpenOptions::new().read(true).write(true).open(XOBIN_PATH)?;
+    backup(bak_file)?;
+
+    std::fs::copy(XOBIN_PATH, TMP_FILE)?;
+    let file = OpenOptions::new().read(true).write(true).open(TMP_FILE)?;
     file.write_at(b"S", ind as u64)?;
+    cmd_cp(TMP_FILE, XOBIN_PATH)?;
+    std::fs::remove_file(TMP_FILE)?;
 
     println!("Successfully reversed the signature modification");
     Ok(())
 }
 
 fn revert_from_backup_entry(no_prompt: &bool) -> bool {
-    xo_warn();
-
     if let Err(err) = revert_from_backup(no_prompt) {
         println!("{err}");
         return false;
@@ -267,25 +277,25 @@ fn revert_from_backup(no_prompt: &bool) -> std::io::Result<()> {
 
 fn get_version() -> std::io::Result<String> {
     let conf_str = std::fs::read_to_string(RM_CONF)?;
-    let re = Regex::new(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+").unwrap();
-    let err_str = format!("Can not find xochitl version");
+    let re = Regex::new(r"REMARKABLE_RELEASE_VERSION=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)").unwrap();
 
-    for line in conf_str.split('\n') {
-        if line.contains("REMARKABLE_RELEASE_VERSION") {
-            let Some(vstring) = re.find(&conf_str) else {
-                return Err(Error::new(ErrorKind::Other, err_str));
-            };
+    let Some(res) = re.captures(&conf_str) else {
+        return Err(Error::new(
+            ErrorKind::Other,
+            format!("Can not find xochitl version"),
+        ));
+    };
 
-            return Ok(vstring.as_str().to_owned());
-        }
-    }
-
-    return Err(Error::new(ErrorKind::Other, err_str));
+    // safe to unwrap as None is caught above
+    Ok(res.get(1).unwrap().as_str().to_owned())
 }
 
-fn xo_warn() {
-    println!(
-        "Remember to run 'systemctl stop xochitl' before applying,
-then 'systemctl start xochitl' once applied\n"
-    );
+// std::fs::copy will throw the error: Text file busy (os error 26)
+// if xochitl is running, this will not
+fn cmd_cp(from: &str, to: &str) -> std::io::Result<String> {
+    let command_out = Command::new("/usr/bin/env")
+        .args(["cp", from, to])
+        .stdout(Stdio::piped())
+        .output()?;
+    String::from_utf8(command_out.stdout).map_err(|err| Error::new(ErrorKind::Other, err))
 }

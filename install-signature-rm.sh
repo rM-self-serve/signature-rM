@@ -2,9 +2,9 @@
 # Copyright (c) 2023 rM-self-serve
 # SPDX-License-Identifier: MIT
 
-sigrm_sha256sum='e716cd5a09a4017e60e0f053d4dbb6aaae59446856b73859ee4ef2d91dd10643'
+sigrm_sha256sum='939c29fb918bd36ba58b11e94ba862016a539003933c5e97c92d9167ddbd7ece'
 
-release='v1.0'
+release='v1.0.1'
 
 installfile='./install-signature-rm.sh'
 gh_pkgname='signature-rM'

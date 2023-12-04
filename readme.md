@@ -34,15 +34,13 @@ This will only need to be installed once, but run everytime the device updates.
 ### To use signature-rM, run:
 
 ```
-$ systemctl stop xochitl
 $ signature-rm apply
-$ systemctl start xochitl
 ```
 Or to revert the modification:
 ```
-$ systemctl stop xochitl
-$ signature-rm revert --backup  # or --reverse
-$ systemctl start xochitl
+$ signature-rm revert --backup
+# OR
+$ signature-rm revert --reverse
 ```
 
 ## Before
