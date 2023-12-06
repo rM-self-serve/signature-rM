@@ -3,7 +3,9 @@ use regex::Regex;
 use std::fs::OpenOptions;
 use std::io::{Error, ErrorKind, Write};
 use std::os::unix::fs::FileExt;
+use std::path::Path;
 use std::process::{Command, ExitCode, Stdio};
+use sysinfo::{DiskExt, System, SystemExt};
 
 pub const XOBIN_PATH: &str = "/usr/bin/xochitl";
 pub const RM_CONF: &str = "/usr/share/remarkable/update.conf";
@@ -56,6 +58,9 @@ fn main() -> ExitCode {
 
     match &cli.command {
         Some(Commands::Apply { no_prompt }) => {
+            if !check_space() {
+                return ExitCode::FAILURE;
+            }
             if !apply_entry(no_prompt) {
                 return ExitCode::FAILURE;
             }
@@ -67,6 +72,9 @@ fn main() -> ExitCode {
         }) => {
             if backup == reverse {
                 println!("Select either '--backup' or '--reverse'");
+                return ExitCode::FAILURE;
+            }
+            if !check_space() {
                 return ExitCode::FAILURE;
             }
             if *backup && !revert_from_backup_entry(no_prompt) {
@@ -298,4 +306,46 @@ fn cmd_cp(from: &str, to: &str) -> std::io::Result<String> {
         .stdout(Stdio::piped())
         .output()?;
     String::from_utf8(command_out.stdout).map_err(|err| Error::new(ErrorKind::Other, err))
+}
+
+fn check_space() -> bool {
+    let mut sys = System::new();
+    sys.refresh_disks_list();
+
+    let Some(root_disk_free_mb) = disk_free_mbyt(&sys, "/") else {
+        println!("Can not find '/'");
+        return false;
+    };
+
+    let Some(home_disk_free_mb) = disk_free_mbyt(&sys, "/home") else {
+        println!("Can not find '/home'");
+        return false;
+    };
+
+    let need = 1;
+    if root_disk_free_mb < need {
+        println!("Not enough space on '/'");
+        println!("Have: {root_disk_free_mb}MB, Need: {need}MB");
+        println!("Try to free space by running: journalctl --vacuum-time=1m");
+        println!("Or: systemctl restart xochitl");
+        return false;
+    }
+    let need = 12;
+    if home_disk_free_mb < need {
+        println!("Not enough space on '/home'");
+        println!("Have: {root_disk_free_mb}MB, Need: {need}MB");
+        return false;
+    }
+
+    true
+}
+
+fn disk_free_mbyt(sys: &System, disk: &str) -> Option<u64> {
+    sys.disks()
+        .into_iter()
+        .filter(|v| v.mount_point() == Path::new(disk))
+        .map(|v| v.available_space() / 1024 / 1024)
+        .collect::<Vec<u64>>()
+        .into_iter()
+        .nth(0)
 }

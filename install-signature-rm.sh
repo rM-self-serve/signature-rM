@@ -2,9 +2,9 @@
 # Copyright (c) 2023 rM-self-serve
 # SPDX-License-Identifier: MIT
 
-sigrm_sha256sum='939c29fb918bd36ba58b11e94ba862016a539003933c5e97c92d9167ddbd7ece'
+sigrm_sha256sum='eb82b757586b187edfd7ba742149b0929d96c124e488fef191524e13ae6bf63e'
 
-release='v1.0.1'
+release='v1.0.2'
 
 installfile='./install-signature-rm.sh'
 gh_pkgname='signature-rM'
@@ -80,9 +80,7 @@ echo ""
 echo "Finished installing ${gh_pkgname}"
 echo ""
 echo "To use ${gh_pkgname}, run:"
-echo "$ systemctl stop xochitl"
 echo "$ $pkgname apply"
-echo "$ systemctl start xochitl"
 echo ""
 
 remove_installfile
