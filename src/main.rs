@@ -51,6 +51,8 @@ pub enum Commands {
     IsApplied {},
     /// Return true or false
     CanApply {},
+    /// Return true or false
+    HasBackup {},
 }
 
 fn main() -> ExitCode {
@@ -98,6 +100,13 @@ fn main() -> ExitCode {
                 return ExitCode::FAILURE;
             }
         }
+        Some(Commands::HasBackup {}) => {
+            let has_backup = has_backup();
+            println!("{has_backup}");
+            if !has_backup {
+                return ExitCode::FAILURE;
+            }
+        }
         None => {}
     }
 
@@ -126,6 +135,18 @@ fn can_apply() -> bool {
     };
 
     result.is_some()
+}
+
+fn has_backup() -> bool {
+    let vers = match get_version() {
+        Ok(val) => val,
+        Err(err) => {
+            println!("{err}");
+            return false;
+        }
+    };
+    let bak_file = format!("{BCKUP_DIR}/xochitl-{vers}-hacked-bak");
+    Path::new(&bak_file).exists()
 }
 
 fn og_index() -> std::io::Result<Option<usize>> {
@@ -181,13 +202,12 @@ fn apply(no_prompt: &bool) -> std::io::Result<()> {
     let bak_file = format!("{BCKUP_DIR}/xochitl-{vers}-bak");
     println!("This will make a backup of xochitl at:\n{}\n", bak_file);
 
+    if is_applied() {
+        println!("Modification has already been applied");
+        return Ok(());
+    }
     let Some(ind) = og_index()? else {
-        let err_str;
-        if is_applied() {
-            err_str = format!("Modification has already been applied");
-        } else {
-            err_str = format!("File is not recognized");
-        }
+        let err_str = format!("File is not recognized");
         return Err(Error::new(ErrorKind::Other, err_str));
     };
 
@@ -232,14 +252,8 @@ fn revert_by_reverse(no_prompt: &bool) -> std::io::Result<()> {
     );
 
     let Some(ind) = mod_index()? else {
-        let err_str;
-        if can_apply() {
-            err_str = format!("Modification has not been applied");
-        } else {
-            err_str = format!("File is not recognized");
-        }
-
-        return Err(Error::new(ErrorKind::Other, err_str));
+        println!("Modification has not been applied");
+        return Ok(());
     };
 
     backup(bak_file)?;
@@ -268,16 +282,20 @@ fn revert_from_backup(no_prompt: &bool) -> std::io::Result<()> {
         return Ok(());
     }
 
+    if mod_index()?.is_none() {
+        println!("Modification has not been applied");
+        return Ok(());
+    };
+
     let vers = get_version()?;
     let bak_file = format!("{BCKUP_DIR}/xochitl-{vers}-bak");
 
-    std::fs::copy(bak_file, XOBIN_PATH).map_err(|err| {
-        if err.kind() == ErrorKind::NotFound {
-            Error::new(ErrorKind::Other, "Can not find backup file".to_string())
-        } else {
-            err
-        }
-    })?;
+    if !Path::new(&bak_file).exists() {
+        let err_str = "Can not find backup file".to_string();
+        return Err(Error::new(ErrorKind::Other, err_str));
+    }
+
+    cmd_cp(&bak_file, XOBIN_PATH)?;
 
     println!("Successfully reverted the signature modification from backup");
     Ok(())
