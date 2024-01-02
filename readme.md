@@ -1,4 +1,4 @@
-![Static Badge](https://img.shields.io/badge/rMarkable-v3.8-green)
+![Static Badge](https://img.shields.io/badge/reMarkable-v3.8-green)
 ![rM1: supported](https://img.shields.io/badge/rM1-supported-green)
 ![rM2: supported](https://img.shields.io/badge/rM2-supported-green)
 
@@ -20,11 +20,23 @@ This will only need to be installed once, but run everytime the device updates.
 
 ## Install
 
+**It is recommended to install via the [toltec package manager](https://toltec-dev.org/).** 
 
+### With toltec
+
+```
+$ opkg update
+$ opkg install signature-rm
+$ opkg remove signature-rm
+```
+
+### No toltec
+
+### Install
 `$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/install-signature-rm.sh && bash install-signature-rm.sh && source ~/.bashrc`
 
 
-## Remove
+### Remove
 
 `$ wget https://raw.githubusercontent.com/rM-self-serve/signature-rM/master/remove-signature-rm.sh && bash remove-signature-rm.sh`
 
