@@ -1,4 +1,4 @@
-![Static Badge](https://img.shields.io/badge/reMarkable-v3.9.4-green)
+![Static Badge](https://img.shields.io/badge/reMarkable-v3.10.2-green)
 [![rm1](https://img.shields.io/badge/rM1-supported-green)](https://remarkable.com/store/remarkable)
 [![rm2](https://img.shields.io/badge/rM2-supported-green)](https://remarkable.com/store/remarkable-2)
 [![opkg](https://img.shields.io/badge/OPKG-signature--rm-blue)](https://toltec-dev.org/)
@@ -11,7 +11,7 @@ https://github.com/Barabazs/rM-signature-patch
 
 ---
 
-This simple program will remove the signature from the bottom of emails sent from the device. It will also take a backup before the modification, and allow reverting the modication from the backup or by performing the modification in reverse.
+This program will remove the signature from the bottom of emails sent from the device. It will also take a backup before the modification, and allow reverting the modication from the backup or by performing the modification in reverse.
 
 This will only need to be installed once, but run everytime the device updates.
 
